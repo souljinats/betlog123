@@ -173,7 +173,12 @@
 
   #previewStage:fullscreen #shot,
   .app.presentation #previewStage #shot {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    margin-left: -195px;
     transform: scale(var(--preview-scale, 1));
+    transform-origin: bottom center;
   }
 
   #previewStage:fullscreen #viewFullScreen,
@@ -372,9 +377,9 @@
 
   <div class="stage" id="previewStage">
     <button id="viewFullScreen" type="button">View full screen</button>
+    <button id="exitFullScreen" type="button" aria-label="Exit full screen" title="Exit full screen"></button>
     <div id="shot">
       <img id="receiptBackground" src="EL%20BLANCO.JPG" alt="">
-      <button id="exitFullScreen" type="button" aria-label="Exit full screen" title="Exit full screen"></button>
       <span class="statusTime" id="oTime"></span>
       <span class="batt" id="oBatt"></span>
       <span class="result" id="oAmt"></span>
@@ -460,7 +465,7 @@ $('rand').onclick = () => {
 };
 
 $('viewFullScreen').addEventListener('click', async () => {
-  const scale = Math.min(window.innerWidth / 390, window.innerHeight / 844);
+  const scale = Math.min(window.innerWidth / 390, 1);
   previewStage.style.setProperty('--preview-scale', scale);
   if (previewStage.requestFullscreen) {
     try {
@@ -488,7 +493,7 @@ document.addEventListener('fullscreenchange', () => {
 });
 window.addEventListener('resize', () => {
   if (isPresentationMode()) {
-    previewStage.style.setProperty('--preview-scale', Math.min(window.innerWidth / 390, window.innerHeight / 844));
+    previewStage.style.setProperty('--preview-scale', Math.min(window.innerWidth / 390, 1));
   }
 });
 window.setInterval(updateStatusBar, 1000);
