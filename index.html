@@ -160,6 +160,17 @@
     background: #0756df;
   }
 
+  html:has(#previewStage:fullscreen),
+  html:has(.app.presentation),
+  body:has(#previewStage:fullscreen),
+  body:has(.app.presentation) {
+    background: #0756df;
+  }
+
+  #previewStage:fullscreen::backdrop {
+    background: #0756df;
+  }
+
   #previewStage:fullscreen #shot,
   .app.presentation #previewStage #shot {
     transform: scale(var(--preview-scale, 1));
