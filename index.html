@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCash Receipt Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @font-face {
+    font-family: 'OvelionCustom';
+    src: url('fonts/Ovelion-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  :root {
+    --emerald: #0b6b55;
+    --emerald-d: #064436;
+    --mint: #d9f5ea;
+    --ink: #12302a;
+    --muted: #6b8a82;
+    --paper: #ffffff;
+    --bg: #eef3f1;
+    --accent: #f2b134;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  .app {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .panel {
+    flex: 1 1 320px;
+    max-width: 460px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
+  }
+
+  .panel h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+
+  .panel p.sub {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .panel h2 {
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 18px 0 8px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 8px 0 3px;
+  }
+
+  input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #d3e0db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  button {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--mint);
+    color: var(--emerald-d);
+  }
+
+  button.primary {
+    background: var(--emerald);
+    color: #fff;
+  }
+
+  .stage {
+    flex: 0 0 auto;
+  }
+
+  #previewStage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #viewFullScreen {
+    align-self: flex-end;
+  }
+
+  #previewStage:fullscreen,
+  .app.presentation #previewStage {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #previewStage:fullscreen #shot,
+  .app.presentation #previewStage #shot {
+    transform: scale(var(--preview-scale, 1));
+  }
+
+  #previewStage:fullscreen #viewFullScreen,
+  .app.presentation #previewStage #viewFullScreen {
+    display: none;
+  }
+
+  #previewStage:fullscreen #statusCover,
+  .app.presentation #previewStage #statusCover {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 5;
+    height: 44px;
+    background: #0756df;
+  }
+
+  #previewStage:fullscreen #exitFullScreen,
+  .app.presentation #previewStage #exitFullScreen {
+    position: absolute;
+    top: 45px;
+    right: 4px;
+    z-index: 6;
+    display: block;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  #exitFullScreen {
+    display: none;
+  }
+
+  .app.presentation .panel {
+    display: none;
+  }
+
+  /* ---------- fixed receipt artwork with editable result text ---------- */
+  #shot {
+    --status-font-family: "Pretendard", "Pretendard Variable", sans-serif;
+    width: 390px;
+    height: 844px;
+    position: relative;
+    overflow: hidden;
+    background: #0756df;
+    color: #102f67;
+  }
+
+  #receiptBackground {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .statusTime {
+    position: absolute;
+    left: 32px;
+    top: 19px;
+    color: #fff;
+    font-family: var(--status-font-family);
+    font-size: 16px;
+    font-weight: 550;
+    letter-spacing: 0.5px;
+  }
+
+  .batt {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 14px;
+    padding: 0 2px;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    background: #fff;
+    color: #0756df;
+    font-family: var(--status-font-family);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -.25px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .batt:after {
+    content: "";
+    position: absolute;
+    right: -4px;
+    top: 4px;
+    width: 2px;
+    height: 5px;
+    background: #fff;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .result {
+    position: absolute;
+    white-space: nowrap;
+    color: #12376d;
+    font-family: var(--result-font, Inter), sans-serif;
+  }
+
+  #oAmt {
+    top: 333px;
+    right: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -.34px;
+  }
+
+  #oTot {
+    top: 408px;
+    right: 40px;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -1px;
+  }
+
+  #oTotCurrency {
+    font: 700 24px Arial, sans-serif;
+  }
+
+  #oRef {
+    top: 470px;
+    left: 88px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -.2px;
+  }
+
+  #oDate {
+    top: 476px;
+    right: 39px;
+    font-size: 11.2px;
+    font-weight: 600;
+    letter-spacing: .2px;
+  }
+
+  select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #d3e0db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <h1>CCash Receipt Studio</h1>
+    <p class="sub">A fictional receipt prop. Edit the result details, then export a 1170 × 2532 PNG.</p>
+
+    <h2>Status bar</h2>
+    <div class="row2">
+      <div><label>Clock</label><input id="statusTime" value="12:18"></div>
+      <div><label>Battery % (0–100)</label><input id="battery" type="number" min="0" max="100" value="87"></div>
+    </div>
+
+    <h2>Amounts</h2>
+    <div class="row2">
+      <div><label>Currency symbol</label><input id="cur" value="₱"></div>
+      <div><label>Amount</label><input id="amount" type="number" step="0.01" value="73.00"></div>
+    </div>
+    <label for="resultFont">Result numbers font</label>
+    <select id="resultFont">
+      <option value="Inter" selected>Inter (Google Fonts)</option>
+      <option value="Roboto">Roboto (Google Fonts)</option>
+      <option value="Arial">Arial</option>
+    </select>
+
+    <h2>Reference</h2>
+    <label>Ref number</label><input id="ref" value="4046141840596">
+    <label>Date &amp; time</label><input id="date" type="datetime-local">
+
+    <div class="btns">
+      <button id="now">Use my current time</button>
+      <button id="rand">Random ref no.</button>
+      <button class="primary" id="export">Export PNG</button>
+    </div>
+    <p class="sub" style="margin-top:12px">The receipt image is fixed; only the amount, time, battery, reference, and date are overlaid. The network indicator is part of the image. This is a fictional game prop, not a real transaction.</p>
+  </div>
+
+  <div class="stage" id="previewStage">
+    <button id="viewFullScreen" type="button">View full screen</button>
+    <div id="shot">
+      <img id="receiptBackground" src="EL%20BLANCO.JPG" alt="">
+      <button id="exitFullScreen" type="button" aria-label="Exit full screen" title="Exit full screen"></button>
+      <span class="statusTime" id="oTime"></span>
+      <span class="batt" id="oBatt"></span>
+      <span class="result" id="oAmt"></span>
+      <span class="result" id="oTot"><span id="oTotCurrency"></span><span id="oTotValue"></span></span>
+      <span class="result" id="oRef"></span>
+      <span class="result" id="oDate"></span>
+      <div id="statusCover" aria-hidden="true"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const app = document.querySelector('.app');
+const previewStage = $('previewStage');
+const money = n => (isFinite(n) ? n : 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let deviceBattery = null;
+
+function isPresentationMode(){
+  return document.fullscreenElement === previewStage || app.classList.contains('presentation');
+}
+
+function updateFullscreenButton(){
+  $('viewFullScreen').textContent = isPresentationMode() ? 'Exit full screen' : 'View full screen';
+}
+
+function updateStatusBar(){
+  if (isPresentationMode()) {
+    $('oTime').textContent = new Intl.DateTimeFormat(undefined, {
+      hour: 'numeric',
+      minute: '2-digit'
+    }).format(new Date());
+    const level = deviceBattery ? deviceBattery.level * 100 : Number($('battery').value);
+    $('oBatt').textContent = Math.max(0, Math.min(100, Math.round(level) || 0));
+    return;
+  }
+
+  $('oTime').textContent = $('statusTime').value;
+  const battery = Math.max(0, Math.min(100, Number($('battery').value) || 0));
+  $('oBatt').textContent = battery;
+}
+
+function fmtDate(v){
+  const d = new Date(v);
+  if (isNaN(d)) return '';
+  let h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${h}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`;
+}
+function localInputValue(d){
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function clockString(d){ return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`; }
+
+function render(){
+  updateStatusBar();
+  const cur = $('cur').value, amt = parseFloat($('amount').value) || 0;
+  $('oAmt').textContent = money(amt);
+  $('oTotCurrency').textContent = cur;
+  $('oTotValue').textContent = money(amt);
+  $('oRef').textContent = $('ref').value;
+  $('oDate').textContent = fmtDate($('date').value);
+}
+
+document.querySelectorAll('.panel input').forEach(i => i.addEventListener('input', render));
+$('resultFont').addEventListener('change', () => {
+  $('shot').style.setProperty('--result-font', `"${$('resultFont').value}"`);
+});
+
+$('now').onclick = () => {
+  const d = new Date();
+  $('date').value = localInputValue(d);
+  $('statusTime').value = clockString(d);
+  render();
+};
+$('rand').onclick = () => {
+  let s = String(Math.floor(Math.random() * 9) + 1);
+  for (let i = 0; i < 12; i++) s += Math.floor(Math.random() * 10);
+  $('ref').value = s;
+  render();
+};
+
+$('viewFullScreen').addEventListener('click', async () => {
+  const scale = Math.min(window.innerWidth / 390, window.innerHeight / 844);
+  previewStage.style.setProperty('--preview-scale', scale);
+  if (previewStage.requestFullscreen) {
+    try {
+      await previewStage.requestFullscreen();
+    } catch (error) {
+      console.error('Could not enter browser fullscreen; using fullscreen preview instead.', error);
+      app.classList.add('presentation');
+    }
+  } else {
+    app.classList.add('presentation');
+  }
+  updateStatusBar();
+});
+
+$('exitFullScreen').addEventListener('click', async () => {
+  if (document.fullscreenElement === previewStage) {
+    await document.exitFullscreen();
+  } else {
+    app.classList.remove('presentation');
+  }
+});
+
+document.addEventListener('fullscreenchange', () => {
+  updateStatusBar();
+});
+window.addEventListener('resize', () => {
+  if (isPresentationMode()) {
+    previewStage.style.setProperty('--preview-scale', Math.min(window.innerWidth / 390, window.innerHeight / 844));
+  }
+});
+window.setInterval(updateStatusBar, 1000);
+
+if (typeof navigator.getBattery === 'function') {
+  navigator.getBattery().then(battery => {
+    deviceBattery = battery;
+    battery.addEventListener('levelchange', updateStatusBar);
+    updateStatusBar();
+  }).catch(error => {
+    console.error('Could not read device battery level; fullscreen preview will use the entered battery value.', error);
+  });
+}
+
+$('export').onclick = async () => {
+  const btn = $('export'); btn.textContent = 'Rendering…';
+  try {
+    await document.fonts.ready;
+    const canvas = await html2canvas($('shot'), {scale: 3, backgroundColor: null, useCORS: true});
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ccash-receipt.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
+  } finally { btn.textContent = 'Export PNG'; }
+};
+
+// Defaults: current date and time. Battery level is entered manually because
+// browsers do not consistently expose it.
+const d0 = new Date();
+$('date').value = localInputValue(d0);
+$('statusTime').value = clockString(d0);
+render();
+</script>
+</body>
+</html>
